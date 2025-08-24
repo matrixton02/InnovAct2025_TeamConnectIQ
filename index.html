@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InnovAct 2025 - Edge Smart Home AI</title>
+    
+</head>
+<body>
     <style>
+        
         * {
             margin: 0;
             padding: 0;
@@ -259,9 +263,8 @@
                 display: none;
             }
         }
+  
     </style>
-</head>
-<body>
 
     <div class="nav-dots">
         <div class="nav-dot active" onclick="scrollToSection(0)"></div>
@@ -277,18 +280,22 @@
     </div>
 
     <section class="section hero visible" id="section-0">
-        <div class="container">
-            <h1>InnovAct 2025</h1>
-            <h2>IoT Track</h2>
-            <p><strong>Problem Statement:</strong> Home Automation cum Security Device</p>
-            <p><strong>Team:</strong> ConnectIQ</p>
-            <p><strong>Members:</strong> Krish Gupta 24BCE2080,</p>
-            <p>Yashasvi Kumar Tiwari 24BCE0345,</p>
-            <p>Maitri Shah 24BCE0323,</p>
-            <p>Aditi Bajpai 24BCE0372,</p>
-            <p>Shreyansh Jain 24BCE2113</p>
-        </div>
-    </section>
+    <div class="container">
+        <h1>InnovAct 2025</h1>
+        <h2>IoT Track</h2>
+        <p><strong>Problem Statement:</strong> Home Automation cum Security Device</p>
+        <p><strong>Team:</strong> ConnectIQ</p>
+        <p><strong>Members:</strong></p>
+        <ul style="list-style: none; padding-left: 20px; margin-top: 5px;">
+            <li>Krish Gupta 24BCE2080</li>
+            <li>Yashasvi Kumar Tiwari 24BCE0345</li>
+            <li>Maitri Shah 24BCE0323</li>
+            <li>Aditi Bajpai 24BCE0372</li>
+            <li>Shreyans Jain 24BCE2113</li>
+        </ul>
+    </div>
+</section>
+
 
     <section class="section" id="section-1">
         <div class="container">
@@ -727,14 +734,6 @@
                 });
             });
 
-    
-            window.addEventListener('scroll', () => {
-                const scrolled = window.pageYOffset;
-                const hero = document.querySelector('.hero');
-                if (hero) {
-                    hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-                }
-            });
         });
 
         setInterval(() => {
