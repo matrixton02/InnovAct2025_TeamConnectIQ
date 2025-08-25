@@ -1,21 +1,10 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <led_js.h>
-#include "DHT.h"
-#define DHTPIN 2
-#define DHTTYPE DHT11
-#define LIGHT_SENSOR_PIN 36
-#define PIR_PIN 33
-DHT dht(DHTPIN,DHTTYPE);
 // ==== WiFi Credentials ====
 const char* ssid     = "Yashasvi";
 const char* password = "Yashasvi@hotspot21";
-float temp;
-float hum;
-unsigned long previousMillis = 0;
-const long interval = 3000;
-int lastMotion=LOW;
-int ledState=LOW;
+
 // ==== Server Setup ====
 WebServer server(80);
 
@@ -31,6 +20,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 LED Control</title>
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
@@ -42,7 +32,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(180deg, #EDF2F4 0%, #8D99AE 25%, #2B2D42 70%, #020202 100%);
+            background: radial-gradient(50% 50% at 50% 50%, #ADD9F4 0%, #020202 100%);
         }
         .smart-banner {
             text-align: left;
@@ -54,9 +44,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
     
         .smart, .effortless {
-            color: #000000;
+            color: #c1c1c1;
             -webkit-text-stroke-width: 0.1px; 
-            -webkit-text-stroke-color: #ffffff; 
+            -webkit-text-stroke-color: #000000; 
             font-family: 'Raleway', sans-serif;
             font-size: 88px;
             font-style: normal;
@@ -65,7 +55,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
 
         .lighting, .living {
-            background: radial-gradient(50% 50% at 50% 50%, #444444 12.02%, #000000 100%);
+            background: radial-gradient(50% 50% at 50% 50%, #c1c1c1 25%, #ffffff 60%);
             background-clip: text;
             -webkit-text-stroke-width: 0.5px; 
             -webkit-text-stroke-color: #36454F; 
@@ -88,39 +78,40 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         }
         .led-label {
             font-size: 1.25rem;
-            font-weight: 1200;
+            font-weight: 600;
             color: #ffffff; 
             flex-grow: 1; 
             text-align: left;
         }
         .toggle-btn {
             padding: 0.75rem 1.5rem;
-            border-radius: 9999px; 
+            border-radius: 9999px; /* Pill-shaped buttons */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            background-color: #343434; 
+            background-color: #343434; /* Teal color for ON */
             color: rgb(0, 0, 0);
             border: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .toggle-btn.on {
-            background-color: #EF233C; 
-            box-shadow: 0 4px 6px #D90429;
+            background-color: #38b2ac; /* Teal */
+            box-shadow: 0 4px 6px rgba(56, 178, 172, 0.3);
         }
         .toggle-btn.off {
             background-color: #c2c2c2; 
             box-shadow: 0 4px 6px rgba(255, 255, 255, 0.3);
         }
         .toggle-btn:hover {
-            transform: translateY(-2px); 
+            transform: translateY(-2px); /* Slight lift on hover */
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
         .toggle-btn:active {
-            transform: translateY(0); 
+            transform: translateY(0); /* Press effect */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        /* LED Indicator styles */
         .led-indicator {
             width: 20px;
             height: 20px;
@@ -139,24 +130,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             color: #718096;
             font-size: 0.9rem;
         }
-
-        .temp-hum-container {
-            margin-top: 1rem;
-            color: white;
-            min-height: 100px;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            background-color: transparent; /* transparent background */
-            border-radius: 0.5rem;
-    
-            display: flex;
-            flex-direction: column; /* vertical stack */
-            justify-content: center; /* center vertically */
-            align-items: center; /* center horizontally */
-            text-align: center;
-            gap: 0.5rem; /* space between the two lines */
-        }
-
     </style>
 </head>
 <body>
@@ -172,7 +145,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             <span class="led-label">LED 1</span>
             <div class="flex items-center">
                 <div id="indicator1" class="led-indicator"></div>
-                <button id="toggleBtn1" class="toggle-btn ml-4">Toggle</button>
+                <button id="toggleBtn1" class="toggle-btn ml-4 off">Toggle</button>
             </div>
         </div>
 
@@ -180,7 +153,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             <span class="led-label">LED 2</span>
             <div class="flex items-center">
                 <div id="indicator2" class="led-indicator"></div>
-                <button id="toggleBtn2" class="toggle-btn ml-4">Toggle</button>
+                <button id="toggleBtn2" class="toggle-btn ml-4 off">Toggle</button>
             </div>
         </div>
 
@@ -188,13 +161,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             <span class="led-label">LED 3</span>
             <div class="flex items-center">
                 <div id="indicator3" class="led-indicator"></div>
-                <button id="toggleBtn3" class="toggle-btn ml-4">Toggle</button>
+                <button id="toggleBtn3" class="toggle-btn ml-4 off">Toggle</button>
             </div>
-        </div>
-
-        <div id="tempHumContainer" class="temp-hum-container" style="display: block;">
-            <div id="temperatureLine">Temperature:  -- </div>
-            <div id="humidityLine">Humidity: -- </div>
         </div>
     </div>
 <script src="/led.js"></script>
@@ -241,15 +209,6 @@ void handleGetStates() {
   server.send(200, "application/json", response);
 }
 
-void handleTemp(){
-  String response="{\"temp\":"+String(temp)+"}";
-  server.send(200,"application/json",response);
-}
-void handleHum(){
-  String response="{\"hum\":"+String(hum)+"}";
-  server.send(200,"application/json",response);
-}
-
 // ==== Setup ====
 void setup() {
   Serial.begin(115200);
@@ -279,42 +238,11 @@ void setup() {
   server.on("/led.js", [](){              // Serve JS file
       server.send_P(200, "application/javascript", jsfile);
   });
-  server.on("/gettemp",handleTemp);
-  server.on("/gethum",handleHum);
   server.begin();
   Serial.println("HTTP server started");
-  dht.begin();
-  analogSetAttenuation(ADC_11db);
-  pinMode(PIR_PIN, INPUT);
 }
 
 // ==== Loop ====
 void loop() {
   server.handleClient();
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-      previousMillis = currentMillis;
-      hum=dht.readHumidity();
-      temp=dht.readTemperature();
-      Serial.print("Humidity: ");
-      Serial.print(hum);
-      Serial.print(" %\t");
-      Serial.print("Temperature: ");
-      Serial.print(temp);
-      Serial.println(" *C");
-      int analogValue = analogRead(LIGHT_SENSOR_PIN);
-      int motion = digitalRead(PIR_PIN);
-      if (motion == HIGH && lastMotion == LOW) {
-         if (ledState){
-            if (analogValue < 40) {
-                digitalWrite(ledPins[2],HIGH);
-            }
-         }
-        else{
-            digitalWrite(ledPins[2],LOW);
-
-        }
-      }
-      lastMotion = motion; // update previous state
-  }
 }
