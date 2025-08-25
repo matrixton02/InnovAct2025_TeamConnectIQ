@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 LED Control</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
@@ -16,7 +15,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(50% 50% at 50% 50%, #ADD9F4 5%, #020202 100%);
+            background: linear-gradient(180deg, #EDF2F4 0%, #8D99AE 25%, #2B2D42 70%, #020202 100%);
         }
         .smart-banner {
             text-align: left;
@@ -28,9 +27,9 @@
         }
     
         .smart, .effortless {
-            color: #c1c1c1;
+            color: #000000;
             -webkit-text-stroke-width: 0.1px; 
-            -webkit-text-stroke-color: #000000; 
+            -webkit-text-stroke-color: #ffffff; 
             font-family: 'Raleway', sans-serif;
             font-size: 88px;
             font-style: normal;
@@ -39,7 +38,7 @@
         }
 
         .lighting, .living {
-            background: radial-gradient(50% 50% at 50% 50%, #c1c1c1 25%, #ffffff 60%);
+            background: radial-gradient(50% 50% at 50% 50%, #444444 12.02%, #000000 100%);
             background-clip: text;
             -webkit-text-stroke-width: 0.5px; 
             -webkit-text-stroke-color: #36454F; 
@@ -79,8 +78,8 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .toggle-btn.on {
-            background-color: #38b2ac; 
-            box-shadow: 0 4px 6px rgba(56, 178, 172, 0.3);
+            background-color: #EF233C; 
+            box-shadow: 0 4px 6px #D90429;
         }
         .toggle-btn.off {
             background-color: #c2c2c2; 
@@ -113,6 +112,24 @@
             color: #718096;
             font-size: 0.9rem;
         }
+
+        .temp-hum-container {
+            margin-top: 1rem;
+            color: white;
+            min-height: 100px;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            background-color: transparent; /* transparent background */
+            border-radius: 0.5rem;
+    
+            display: flex;
+            flex-direction: column; /* vertical stack */
+            justify-content: center; /* center vertically */
+            align-items: center; /* center horizontally */
+            text-align: center;
+            gap: 0.5rem; /* space between the two lines */
+        }
+
     </style>
 </head>
 <body>
@@ -147,15 +164,19 @@
                 <button id="toggleBtn3" class="toggle-btn ml-4">Toggle</button>
             </div>
         </div>
+
+        <div id="tempHumContainer" class="temp-hum-container" style="display: block;">
+            <div id="temperatureLine">Temperature:  -- </div>
+            <div id="humidityLine">Humidity: -- </div>
+        </div>
+
     </div>
 
     <script>
-        // Define the IP address of your ESP32.
-        // You'll need to find this after your ESP32 connects to your Wi-Fi network.
-        // It will be printed to the Serial Monitor when the ESP32 starts up.
-        const ESP32_IP = '10.138.248.236'; // <<< IMPORTANT: Replace with your ESP32's actual IP address!
 
-        // Get references to HTML elements
+        const ESP32_IP = '10.138.248.236';
+
+ 
         const statusMessage = document.getElementById('status');
         const toggleBtn1 = document.getElementById('toggleBtn1');
         const toggleBtn2 = document.getElementById('toggleBtn2');
@@ -164,22 +185,16 @@
         const indicator2 = document.getElementById('indicator2');
         const indicator3 = document.getElementById('indicator3');
 
-        // Initial LED states (assuming off)
+
         let ledStates = {
-            1: 0, // 0 for OFF, 1 for ON
+            1: 0, 
             2: 0,
             3: 0
         };
 
-        /**
-         * Sends a request to the ESP32 to toggle a specific LED.
-         * @param {number} ledNum The number of the LED (1, 2, or 3).
-         * @param {number} state The desired state (0 for OFF, 1 for ON).
-         */
         async function toggleLED(ledNum, state) {
             statusMessage.textContent = `Toggling LED ${ledNum}...`;
             try {
-                // Construct the URL for the ESP32 endpoint
                 const url = `http://${ESP32_IP}/toggleLED?led=${ledNum}&state=${state}`;
                 const response = await fetch(url);
 
@@ -188,11 +203,11 @@
                 }
 
                 const data = await response.json();
-                console.log(data); // Log the response from ESP32
+                console.log(data); 
 
-                // Update the UI based on the new state
+
                 updateUI(ledNum, state);
-                ledStates[ledNum] = state; // Update local state
+                ledStates[ledNum] = state;
                 statusMessage.textContent = `LED ${ledNum} is now ${state === 1 ? 'ON' : 'OFF'}.`;
 
             } catch (error) {
@@ -201,11 +216,6 @@
             }
         }
 
-        /**
-         * Updates the visual indicator and button text for a given LED.
-         * @param {number} ledNum The number of the LED.
-         * @param {number} state The current state (0 or 1).
-         */
         function updateUI(ledNum, state) {
             const indicator = document.getElementById(`indicator${ledNum}`);
             const button = document.getElementById(`toggleBtn${ledNum}`);
@@ -223,7 +233,6 @@
             }
         }
 
-        // Add event listeners to the buttons
         toggleBtn1.addEventListener('click', () => {
             const newState = ledStates[1] === 0 ? 1 : 0;
             toggleLED(1, newState);
@@ -239,7 +248,6 @@
             toggleLED(3, newState);
         });
 
-        // Initialize UI on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateUI(1, ledStates[1]);
             updateUI(2, ledStates[2]);
