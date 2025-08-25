@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 LED Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(180deg, #020202 0%, #2B2D42 50%, #8D99AE 75%, #EDF2F4 100%);
+        }
+        .smart-banner {
+            text-align: left;
+            color: #e0e0e0;
+        }
+        .headline, .subheadline {
+            line-height: 1.05;
+            letter-spacing: 0.01em;
+        }
+    
+        .smart, .effortless {
+            color: #ffffff;
+            -webkit-text-stroke-width: 0.1px; 
+            -webkit-text-stroke-color: #000000; 
+            font-family: 'Raleway', sans-serif;
+            font-size: 88px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 129px;
+        }
+
+        .lighting, .living {
+            background: radial-gradient(50% 50% at 50% 50%, #FFF 12.02%, #999 100%);
+            background-clip: text;
+            -webkit-text-stroke-width: 0.5px; 
+            -webkit-text-stroke-color: #36454F; 
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 96px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 129px;
+        }
+
+        .led-control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+        }
+        .led-label {
+            font-size: 1.25rem;
+            font-weight: 1200;
+            color: #ffffff; 
+            flex-grow: 1; 
+            text-align: left;
+        }
+        .toggle-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; 
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #343434; 
+            color: rgb(0, 0, 0);
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .toggle-btn.on {
+            background-color: #EF233C; 
+            box-shadow: 0 4px 6px #D90429;
+        }
+        .toggle-btn.off {
+            background-color: #c2c2c2; 
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.3);
+        }
+        .toggle-btn:hover {
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .toggle-btn:active {
+            transform: translateY(0); 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .led-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            margin-left: 1rem;
+            transition: background-color 0.3s ease-in-out;
+            border: 2px solid #cbd5e0; 
+        }
+        .led-indicator.on {
+            background-color: #ffffff; 
+            box-shadow: 0 0 10px #e3e3e3, 0 0 20px #dee2e1; 
+        }
+        .status-message {
+            margin-top: 2rem;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .temp-hum-container {
+            margin-top: 1rem;
+            color: white;
+            min-height: 100px;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            background-color: transparent; /* transparent background */
+            border-radius: 0.5rem;
+    
+            display: flex;
+            flex-direction: column; /* vertical stack */
+            justify-content: center; /* center vertically */
+            align-items: center; /* center horizontally */
+            text-align: center;
+            gap: 0.5rem; /* space between the two lines */
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="smart-banner">
+        <div class="headline">
+            <span class="smart">Smart </span><span class="lighting">lighting,</span>
+        </div>
+        <div class="subheadline">
+            <span class="effortless">Effortless </span><span class="living">living.</span>
+        </div>
+
+        <div class="led-control-group">
+            <span class="led-label">LED 1</span>
+            <div class="flex items-center">
+                <div id="indicator1" class="led-indicator"></div>
+                <button id="toggleBtn1" class="toggle-btn ml-4">Toggle</button>
+            </div>
+        </div>
+
+        <div class="led-control-group">
+            <span class="led-label">LED 2</span>
+            <div class="flex items-center">
+                <div id="indicator2" class="led-indicator"></div>
+                <button id="toggleBtn2" class="toggle-btn ml-4">Toggle</button>
+            </div>
+        </div>
+
+        <div class="led-control-group">
+            <span class="led-label">LED 3</span>
+            <div class="flex items-center">
+                <div id="indicator3" class="led-indicator"></div>
+                <button id="toggleBtn3" class="toggle-btn ml-4">Toggle</button>
+            </div>
+        </div>
+
+        <div id="tempHumContainer" class="temp-hum-container" style="display: block;">
+            <div id="temperatureLine">Temperature:  -- </div>
+            <div id="humidityLine">Humidity: -- </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        const ESP32_IP = '10.138.248.236';
+
+ 
+        const statusMessage = document.getElementById('status');
+        const toggleBtn1 = document.getElementById('toggleBtn1');
+        const toggleBtn2 = document.getElementById('toggleBtn2');
+        const toggleBtn3 = document.getElementById('toggleBtn3');
+        const indicator1 = document.getElementById('indicator1');
+        const indicator2 = document.getElementById('indicator2');
+        const indicator3 = document.getElementById('indicator3');
+
+
+        let ledStates = {
+            1: 0, 
+            2: 0,
+            3: 0
+        };
+
+        async function toggleLED(ledNum, state) {
+            statusMessage.textContent = `Toggling LED ${ledNum}...`;
+            try {
+                const url = `http://${ESP32_IP}/toggleLED?led=${ledNum}&state=${state}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(data); 
+
+
+                updateUI(ledNum, state);
+                ledStates[ledNum] = state;
+                statusMessage.textContent = `LED ${ledNum} is now ${state === 1 ? 'ON' : 'OFF'}.`;
+
+            } catch (error) {
+                console.error('Error toggling LED:', error);
+                statusMessage.textContent = `Error: Could not connect to ESP32 or toggle LED ${ledNum}. Make sure the IP address is correct and ESP32 is running.`;
+            }
+        }
+
+        function updateUI(ledNum, state) {
+            const indicator = document.getElementById(`indicator${ledNum}`);
+            const button = document.getElementById(`toggleBtn${ledNum}`);
+
+            if (state === 1) {
+                indicator.classList.add('on');
+                button.classList.remove('off');
+                button.classList.add('on');
+                button.textContent = 'Turn Off';
+            } else {
+                indicator.classList.remove('on');
+                button.classList.remove('on');
+                button.classList.add('off');
+                button.textContent = 'Turn On';
+            }
+        }
+
+        toggleBtn1.addEventListener('click', () => {
+            const newState = ledStates[1] === 0 ? 1 : 0;
+            toggleLED(1, newState);
+        });
+
+        toggleBtn2.addEventListener('click', () => {
+            const newState = ledStates[2] === 0 ? 1 : 0;
+            toggleLED(2, newState);
+        });
+
+        toggleBtn3.addEventListener('click', () => {
+            const newState = ledStates[3] === 0 ? 1 : 0;
+            toggleLED(3, newState);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI(1, ledStates[1]);
+            updateUI(2, ledStates[2]);
+            updateUI(3, ledStates[3]);
+            statusMessage.textContent = `Ready. Please update ESP32_IP to your ESP32's IP address.`;
+        });
+
+    </script>
+</body>
+</html>
